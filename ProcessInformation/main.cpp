@@ -12,16 +12,19 @@ const std::map<DWORD, std::string> PsPriority = {
 	{REALTIME_PRIORITY_CLASS, "Real-time Priority"}
 };
 
-void ChangeProcessPriority()
+const std::map<DWORD, std::string> ThPriority = {
+	{THREAD_PRIORITY_IDLE, "Idle Priority"},
+	{THREAD_PRIORITY_LOWEST, "Lowest Priority"},
+	{THREAD_PRIORITY_BELOW_NORMAL, "Below Normal Priority"},
+	{THREAD_PRIORITY_NORMAL, "Normal Priority"},
+	{THREAD_PRIORITY_ABOVE_NORMAL, "Above Normal Priority"},
+	{THREAD_PRIORITY_HIGHEST, "Highest Priority"},
+	{THREAD_PRIORITY_TIME_CRITICAL, "Time Critical Priority"}
+};
+
+DWORD ProcessPrioritySwitch(const int& choice, bool& defaultchoice)
 {
-	HANDLE hProcess = GetCurrentProcess();
-	std::cout << "Which priority do you wish to change to process to?\n1) Idle\n2) Below Normal\n3) Normal\n4) Above Normal\n5) Highest\n6) Real-time\n";
-	int choice;
-	std::cin >> choice;
-	
 	DWORD priority;
-	bool defaultchoice = false;
-	std::cout << "Attempting to set the current process to ";
 	switch (choice)
 	{
 	case 1:
@@ -47,7 +50,52 @@ void ChangeProcessPriority()
 		defaultchoice = true;
 		break;
 	}
-	std::cout << PsPriority.at(priority) << "...\n";
+	return priority;
+}
+
+DWORD ThreadPrioritySwitch(const int& choice, bool& defaultchoice)
+{
+	DWORD priority;
+	switch (choice)
+	{
+	case 1:
+		priority = THREAD_PRIORITY_IDLE;
+		break;
+	case 2:
+		priority = THREAD_PRIORITY_LOWEST;
+		break;
+	case 3:
+		priority = THREAD_PRIORITY_BELOW_NORMAL;
+		break;
+	case 4:
+		priority = THREAD_PRIORITY_NORMAL;
+		break;
+	case 5:
+		priority = THREAD_PRIORITY_ABOVE_NORMAL;
+		break;
+	case 6:
+		priority = THREAD_PRIORITY_HIGHEST;
+		break;
+	case 7:
+		priority = THREAD_PRIORITY_TIME_CRITICAL;
+		break;
+	default:
+		priority = THREAD_PRIORITY_NORMAL;
+		defaultchoice = true;
+		break;
+	}
+	return priority;
+}
+
+void ChangeProcessPriority()
+{
+	HANDLE hProcess = GetCurrentProcess();
+	std::cout << "Which priority do you wish to change to process to?\n1) Idle\n2) Below Normal\n3) Normal\n4) Above Normal\n5) Highest\n6) Real-time\n";
+	int choice;
+	std::cin >> choice;
+	bool defaultchoice = false;
+	DWORD priority = ProcessPrioritySwitch(choice, defaultchoice);
+	std::cout << "Attempting to set the current process to " << PsPriority.at(priority) << "...\n";
 	if (defaultchoice)
 	{
 		std::cout << "You chose an invalid option, so went with defaults.\n";
@@ -75,47 +123,18 @@ void ChangeThreadPriority()
 	int choice;
 	std::cout << "Which priority do you wish to set the current thread to?\n1) Idle\n2)Lowest\n3) Below Normal\n4) Normal\n5) Above Normal\n6) Highest\n7) Time Critical\n";
 	std::cin >> choice;
-	DWORD priority;
-	switch (choice)
+	bool defaultchoice = false;
+	DWORD priority = ThreadPrioritySwitch(choice, defaultchoice);
+	std::cout << "Attempting to set current thread to " << ThPriority.at(priority) << "...\n";
+	if (defaultchoice)
 	{
-	case 1:
-		priority = THREAD_PRIORITY_IDLE;
-		std::cout << "Attempting to set current thread to idle priority...\n";
-		break;
-	case 2:
-		priority = THREAD_PRIORITY_LOWEST;
-		std::cout << "Attempting to set current thread to lowest priority...\n";
-		break;
-	case 3:
-		priority = THREAD_PRIORITY_BELOW_NORMAL;
-		std::cout << "Attempting to set current thread to below normal priority...\n";
-		break;
-	case 4:
-		priority = THREAD_PRIORITY_NORMAL;
-		std::cout << "Attempting to set current thread to normal priority...\n";
-		break;
-	case 5:
-		priority = THREAD_PRIORITY_ABOVE_NORMAL;
-		std::cout << "Attempting to set current thread to above normal priority...\n";
-		break;
-	case 6:
-		priority = THREAD_PRIORITY_HIGHEST;
-		std::cout << "Attempting to set current thread to highest priority...\n";
-		break;
-	case 7:
-		priority = THREAD_PRIORITY_TIME_CRITICAL;
-		std::cout << "Attempting to set current thread to time critical priority...\n";
-		break;
-	default:
-		priority = THREAD_PRIORITY_NORMAL;
-		std::cout << "Misunderstood option. Defaulting to normal priority thread...\n";
-		break;
+		std::cout << "You chose an invalid option, so went with defaults.\n";
 	}
 	BOOL threadSuccess = SetThreadPriority(hThread, priority);
 	if (threadSuccess)
 	{
 		std::cout << "Successfully set thread priority! Check Process Explorer!\n";
-		std::cout << "Thread Priority is currently: " << GetThreadPriority(hThread) << '\n';
+		std::cout << "Thread Priority is currently: " << ThPriority.at(GetThreadPriority(hThread)) << '\n';
 	}
 	else
 	{
@@ -144,9 +163,9 @@ int main()
 	{
 		system("cls");
 		std::cout << "Current process priority is: " << PsPriority.at(GetPriorityClass(GetCurrentProcess())) << '\n';
-		std::cout << "Current thread priority is: " << GetThreadPriority(GetCurrentThread()) << '\n';
+		std::cout << "Current thread priority is: " << ThPriority.at(GetThreadPriority(GetCurrentThread())) << '\n';
 		int choice;
-		std::cout << "What do you want to do?\n1) Change Process Priority\n2) Change Thread Priority\n3) Initiate a long running loop to track thread state changes\n";
+		std::cout << "What do you want to do?\n1) Change Process Priority\n2) Change Thread Priority\n3) Initiate a long running loop to track thread state changes\n4) Thinking about quitting...\n";
 		std::cin >> choice;
 		switch (choice)
 		{
@@ -158,6 +177,8 @@ int main()
 			break;
 		case 3:
 			LongRunningLoop();
+			break;
+		case 4:
 			break;
 		default:
 			std::cout << "Did not understand that choice. Please try again...\n";
