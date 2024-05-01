@@ -1,5 +1,16 @@
 #include<iostream>
 #include<Windows.h>
+#include<map>
+#include<string>
+
+const std::map<DWORD, std::string> PsPriority = {
+	{IDLE_PRIORITY_CLASS, "Idle Priority"},
+	{BELOW_NORMAL_PRIORITY_CLASS, "Below Normal Priority"},
+	{NORMAL_PRIORITY_CLASS, "Normal Priority"},
+	{ABOVE_NORMAL_PRIORITY_CLASS, "Above Normal Priority"},
+	{HIGH_PRIORITY_CLASS, "High Priority"},
+	{REALTIME_PRIORITY_CLASS, "Real-time Priority"}
+};
 
 void ChangeProcessPriority()
 {
@@ -9,36 +20,41 @@ void ChangeProcessPriority()
 	std::cin >> choice;
 	
 	DWORD priority;
+	bool defaultchoice = false;
+	std::cout << "Attempting to set the current process to ";
 	switch (choice)
 	{
 	case 1:
 		priority = IDLE_PRIORITY_CLASS;
-		std::cout << "Attempting set to Idle priority...\n";
 		break;
 	case 2:
 		priority = BELOW_NORMAL_PRIORITY_CLASS;
-		std::cout << "Attempting set to Below Normal priority...\n";
 		break;
 	case 3:
 		priority = NORMAL_PRIORITY_CLASS;
-		std::cout << "Attempting set to Normal priority...\n";
 		break;
 	case 4:
 		priority = ABOVE_NORMAL_PRIORITY_CLASS;
-		std::cout << "Attempting set to Above Normal Priority...\n";
 		break;
 	case 5:
 		priority = HIGH_PRIORITY_CLASS;
-		std::cout << "Attempting set to High priority...\n";
 		break;
 	case 6:
 		priority = REALTIME_PRIORITY_CLASS;
-		std::cout << "Attempting set to Realtime Priority (in spite of reported success, if process doesn't have SeIncreaseBasePriorityPrivilege, then this will likely just go to high priority values).\n";
 		break;
 	default:
 		priority = NORMAL_PRIORITY_CLASS;
-		std::cout << "Misunderstood option. Defaulting to Normal priority. Returning to main...\n";
+		defaultchoice = true;
 		break;
+	}
+	std::cout << PsPriority.at(priority) << "...\n";
+	if (defaultchoice)
+	{
+		std::cout << "You chose an invalid option, so went with defaults.\n";
+	}
+	if (priority == REALTIME_PRIORITY_CLASS)
+	{
+		std::cout << "If this process doesn't have SeIncreaseBasePriorityPrivilege, then this will go to high priority values.\n";
 	}
 	BOOL success = SetPriorityClass(hProcess, priority);
 	if (success)
@@ -126,6 +142,9 @@ int main()
 	char keepGoing = 'Y';
 	while (keepGoing == 'Y')
 	{
+		system("cls");
+		std::cout << "Current process priority is: " << PsPriority.at(GetPriorityClass(GetCurrentProcess())) << '\n';
+		std::cout << "Current thread priority is: " << GetThreadPriority(GetCurrentThread()) << '\n';
 		int choice;
 		std::cout << "What do you want to do?\n1) Change Process Priority\n2) Change Thread Priority\n3) Initiate a long running loop to track thread state changes\n";
 		std::cin >> choice;
