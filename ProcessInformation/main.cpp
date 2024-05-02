@@ -117,6 +117,19 @@ void ChangeProcessPriority()
 	CloseHandle(hProcess);
 }
 
+void ChangeProcessBoost()
+{
+	HANDLE hProcess = GetCurrentProcess();
+	BOOL priorityBoostOld = false;
+	GetProcessPriorityBoost(hProcess, &priorityBoostOld);
+	std::string priorityBoostOldString = priorityBoostOld ? "Dynamic priority boost is disabled" : "Dynamic priority boost is enabled";
+	std::cout << "Process priority boost is currently: " << priorityBoostOldString << ".\n1) Turn Off Dynamic Priority Boost\n2) Turn On Dynamic Priority Boost.\n";
+	int choice;
+	std::cin >> choice;
+	bool priorityBoostChoice = choice == 1 ? true : false;
+	SetProcessPriorityBoost(hProcess, priorityBoostChoice);
+}
+
 void ChangeThreadBoost()
 {
 	HANDLE hThread = GetCurrentThread();
@@ -128,6 +141,14 @@ void ChangeThreadBoost()
 	std::cin >> choice;
 	bool priorityBoostChoice = choice == 1 ? true : false;
 	SetThreadPriorityBoost(hThread, priorityBoostChoice);
+}
+
+void BoostPriorityChangerSelector()
+{
+	std::cout << "Which boost do you want to change?\n1) Process\n2) Thread\n";
+	int choice;
+	std::cin >> choice;
+	choice == 1 ? ChangeProcessBoost() : ChangeThreadBoost();
 }
 void ChangeThreadPriority()
 {
@@ -177,7 +198,7 @@ int main()
 		std::cout << "Current process priority is: " << PsPriority.at(GetPriorityClass(GetCurrentProcess())) << '\n';
 		std::cout << "Current thread priority is: " << ThPriority.at(GetThreadPriority(GetCurrentThread())) << '\n';
 		int choice;
-		std::cout << "What do you want to do?\n1) Change Process Priority\n2) Change Thread Priority\n3) Initiate a long running loop to track thread state changes\n4) Change current thread priority boost\n5) Thinking about quitting...\n";
+		std::cout << "What do you want to do?\n1) Change Process Priority\n2) Change Thread Priority\n3) Initiate a long running loop to track thread state changes\n4) Change dynamic priority boosts\n5) Thinking about quitting...\n";
 		std::cin >> choice;
 		switch (choice)
 		{
@@ -191,7 +212,8 @@ int main()
 			LongRunningLoop();
 			break;
 		case 4:
-			ChangeThreadBoost();
+			BoostPriorityChangerSelector();
+			break;
 		case 5:
 			break;
 		default:
