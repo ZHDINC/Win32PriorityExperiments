@@ -2,6 +2,8 @@
 #include<Windows.h>
 #include<map>
 #include<string>
+#include<vector>
+#include<exception>
 
 const std::map<DWORD, std::string> PsPriority = {
 	{IDLE_PRIORITY_CLASS, "Idle Priority"},
@@ -150,9 +152,8 @@ void BoostPriorityChangerSelector()
 	std::cin >> choice;
 	choice == 1 ? ChangeProcessBoost() : ChangeThreadBoost();
 }
-void ChangeThreadPriority()
+void ChangeThreadPriority(HANDLE hThread)
 {
-	HANDLE hThread = GetCurrentThread();
 	int choice;
 	std::cout << "Which priority do you wish to set the current thread to?\n1) Idle\n2)Lowest\n3) Below Normal\n4) Normal\n5) Above Normal\n6) Highest\n7) Time Critical\n";
 	std::cin >> choice;
@@ -174,7 +175,6 @@ void ChangeThreadPriority()
 		std::cout << "Failed to set thread priority! Check last error!\n";
 		std::cout << GetLastError();
 	}
-	CloseHandle(hThread);
 }
 
 void LongRunningLoop()
@@ -189,14 +189,36 @@ void LongRunningLoop()
 	std::cout << '\n';
 }
 
+class ThreadHolder
+{
+	HANDLE hThread;
+public:
+	ThreadHolder(HANDLE hThread) : hThread{ hThread } { };
+	~ThreadHolder() { CloseHandle(hThread); }
+	HANDLE GetThread() const
+	{
+		return hThread;
+	}
+};
+
 int main()
 {
+	std::vector<ThreadHolder> hThreads;
 	char keepGoing = 'Y';
 	while (keepGoing == 'Y')
 	{
 		system("cls");
 		std::cout << "Current process priority is: " << PsPriority.at(GetPriorityClass(GetCurrentProcess())) << '\n';
 		std::cout << "Current thread priority is: " << ThPriority.at(GetThreadPriority(GetCurrentThread())) << '\n';
+		if (hThreads.size() != 0)
+		{
+			int i = 1;
+			for (const auto& hThread : hThreads)
+			{
+				std::cout << "Thread " << i << "  priority: " << ThPriority.at(GetThreadPriority(hThread.GetThread()));
+				i++;
+			}
+		}
 		int choice;
 		std::cout << "What do you want to do?\n1) Change Process Priority\n2) Change Thread Priority\n3) Initiate a long running loop to track thread state changes\n4) Change dynamic priority boosts\n5) Thinking about quitting...\n";
 		std::cin >> choice;
@@ -206,8 +228,27 @@ int main()
 			ChangeProcessPriority();
 			break;
 		case 2:
-			ChangeThreadPriority();
+		{
+			int threadChoice;
+			std::cout << "Which thread to change the priority of?\n(thread 0 for current process)\n";
+			std::cin >> threadChoice;
+			if (threadChoice == 0)
+			{
+				ChangeThreadPriority(GetCurrentThread());
+			}
+			else
+			{
+				try
+				{
+					ChangeThreadPriority(hThreads.at(threadChoice-1).GetThread());
+				}
+				catch(std::out_of_range e)
+				{
+					std::cout << "Invalid Index!\n";
+				}
+			}
 			break;
+		}
 		case 3:
 			LongRunningLoop();
 			break;
