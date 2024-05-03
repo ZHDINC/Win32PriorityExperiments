@@ -179,27 +179,42 @@ void ChangeThreadPriority(HANDLE hThread)
 
 void LongRunningLoop()
 {
-	char beginLoop;
-	std::cout << "Awaiting performance monitor ready...";
-	std::cin >> beginLoop;
-	for (int i = 0; i < 1000000; i++)
+	//char beginLoop;
+	//std::cout << "Awaiting performance monitor ready...";
+	//std::cin >> beginLoop;
+	int count = 0;
+	while(true)
 	{
-		std::cout << i << ' ';
+		count++;
+		//std::cout << i << ' ';
 	}
-	std::cout << '\n';
+	//std::cout << '\n';
 }
 
 class ThreadHolder
 {
-	HANDLE hThread;
+	HANDLE hThread = INVALID_HANDLE_VALUE;
 public:
 	ThreadHolder(HANDLE hThread) : hThread{ hThread } { };
-	~ThreadHolder() { CloseHandle(hThread); }
+	ThreadHolder(const ThreadHolder& other) = delete; // I would be fine with copying assuming there was a way to create a new handle from the existing one. Move constructor does what I need it to. 
+	ThreadHolder& operator=(ThreadHolder& other) = delete;
+	ThreadHolder(ThreadHolder&& other)
+	{
+		this->hThread = other.hThread;
+		other.hThread = INVALID_HANDLE_VALUE;
+	}
+	~ThreadHolder() 
+	{
+		if(hThread != INVALID_HANDLE_VALUE)
+			CloseHandle(hThread); 
+	}
 	HANDLE GetThread() const
 	{
 		return hThread;
 	}
 };
+
+DWORD WINAPI LongRunningLoopCaller(PVOID pdata);
 
 int main()
 {
@@ -215,12 +230,12 @@ int main()
 			int i = 1;
 			for (const auto& hThread : hThreads)
 			{
-				std::cout << "Thread " << i << "  priority: " << ThPriority.at(GetThreadPriority(hThread.GetThread()));
+				std::cout << "Thread " << i << "  priority: " << ThPriority.at(GetThreadPriority(hThread.GetThread())) << "\n";
 				i++;
 			}
 		}
 		int choice;
-		std::cout << "What do you want to do?\n1) Change Process Priority\n2) Change Thread Priority\n3) Initiate a long running loop to track thread state changes\n4) Change dynamic priority boosts\n5) Thinking about quitting...\n";
+		std::cout << "What do you want to do?\n1) Change Process Priority\n2) Change Thread Priority\n3) Initiate a long running loop to track thread state changes\n4) Change dynamic priority boosts\n5) Create a new thread and start executing the long running loop\n6) Thinking about quitting...\n";
 		std::cin >> choice;
 		switch (choice)
 		{
@@ -256,6 +271,12 @@ int main()
 			BoostPriorityChangerSelector();
 			break;
 		case 5:
+		{
+			HANDLE thread = CreateThread(nullptr, 0, LongRunningLoopCaller, nullptr, 0, nullptr);
+			hThreads.push_back(ThreadHolder(thread));
+			break;
+		}
+		case 6:
 			break;
 		default:
 			std::cout << "Did not understand that choice. Please try again...\n";
@@ -264,6 +285,12 @@ int main()
 		std::cout << "Keep going? (Y/N)";
 		std::cin >> keepGoing;
 	}
+}
+
+DWORD WINAPI LongRunningLoopCaller(PVOID pdata)
+{
+	LongRunningLoop();
+	return 0;
 }
 
 // Awaiting refactor for start/stop background mode...
