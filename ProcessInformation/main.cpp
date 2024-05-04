@@ -214,6 +214,27 @@ public:
 	}
 };
 
+void ChangeProcessAffinityMask()
+{
+	int sum = 0;
+	std::cout << "On this processor, here are the possible affinity masks for individual cpus:\n";
+	for (int i = 0; i < GetMaximumProcessorCount(ALL_PROCESSOR_GROUPS); i++)
+	{
+		if (sum == 0)
+		{
+			sum++;
+			std::cout << sum << " ";
+			continue;
+		}
+		sum *= 2;
+		std::cout << sum << " ";
+	}
+	DWORD_PTR choice;
+	std::cout << "\nWhich affinity mask would you like to change to?\n";
+	std::cin >> choice;
+	SetProcessAffinityMask(GetCurrentProcess(), choice);
+}
+
 DWORD WINAPI LongRunningLoopCaller(PVOID pdata);
 
 int main()
@@ -239,7 +260,8 @@ int main()
 			}
 		}
 		int choice;
-		std::cout << "What do you want to do?\n1) Change Process Priority\n2) Change Thread Priority\n3) Initiate a long running loop to track thread state changes\n4) Change dynamic priority boosts\n5) Create a new thread and start executing the long running loop\n6) Thinking about quitting...\n";
+		std::cout << "What do you want to do?\n1) Change Process Priority\n2) Change Thread Priority\n3) Initiate a long running loop to track thread state changes\n" << 
+			"4) Change dynamic priority boosts\n5) Create a new thread and start executing the long running loop\n6) Change process affinity mask\n7) Thinking about quitting...\n";
 		std::cin >> choice;
 		switch (choice)
 		{
@@ -281,6 +303,10 @@ int main()
 			break;
 		}
 		case 6:
+			ChangeProcessAffinityMask();
+			GetProcessAffinityMask(GetCurrentProcess(), &processAffinityMask, &systemAffinityMask);
+			break;
+		case 7:
 			break;
 		default:
 			std::cout << "Did not understand that choice. Please try again...\n";
