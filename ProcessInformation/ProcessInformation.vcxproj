@@ -129,6 +129,11 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ProcessUtilities.h" />
+    <ClInclude Include="ThreadHolder.h" />
+    <ClInclude Include="ThreadUtilities.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
