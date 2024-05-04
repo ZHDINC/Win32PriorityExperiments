@@ -220,10 +220,14 @@ int main()
 {
 	std::vector<ThreadHolder> hThreads;
 	char keepGoing = 'Y';
+	DWORD_PTR processAffinityMask, systemAffinityMask;
+	GetProcessAffinityMask(GetCurrentProcess(), &processAffinityMask, &systemAffinityMask); // initially tried to be smart about this by using DWORD variables and then casting the address of these to PDWORD_PTR, but this corrupted the stack
 	while (keepGoing == 'Y')
 	{
 		system("cls");
 		std::cout << "Current process priority is: " << PsPriority.at(GetPriorityClass(GetCurrentProcess())) << '\n';
+		
+		std::cout << "Process Affinity Group: " << processAffinityMask << " System Affinity Mask: " << systemAffinityMask << '\n';
 		std::cout << "Current thread priority is: " << ThPriority.at(GetThreadPriority(GetCurrentThread())) << '\n';
 		if (hThreads.size() != 0)
 		{
