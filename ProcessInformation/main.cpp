@@ -16,13 +16,13 @@ void BoostPriorityChangerSelector()
 	choice == 1 ? ChangeProcessBoost() : ChangeThreadBoost();
 }
 
-void LongRunningLoop()
+void LongRunningLoop(bool* flag)
 {
 	//char beginLoop;
 	//std::cout << "Awaiting performance monitor ready...";
 	//std::cin >> beginLoop;
 	int count = 0;
-	while(true)
+	while(*flag == false)
 	{
 		count++;
 		//std::cout << i << ' ';
@@ -30,7 +30,7 @@ void LongRunningLoop()
 	//std::cout << '\n';
 }
 
-DWORD WINAPI LongRunningLoopCaller(PVOID pdata);
+DWORD WINAPI ThreadWork(PVOID pdata);
 
 int main()
 {
@@ -44,7 +44,7 @@ int main()
 		std::cout << "Current process priority is: " << PsPriority.at(GetPriorityClass(GetCurrentProcess())) << '\n';
 		
 		std::cout << "Process Affinity Group: " << processAffinityMask << " System Affinity Mask: " << systemAffinityMask << '\n';
-		std::cout << "Current thread priority is: " << ThPriority.at(GetThreadPriority(GetCurrentThread())) << '\n';
+		std::cout << "Current thread priority is: " << ThPriority.at(GetThreadPriority(GetCurrentThread())) <<  '\n';
 		if (hThreads.size() != 0)
 		{
 			int i = 1;
@@ -56,7 +56,8 @@ int main()
 		}
 		int choice;
 		std::cout << "What do you want to do?\n1) Change Process Priority\n2) Change Thread Priority\n3) Initiate a long running loop to track thread state changes\n" << 
-			"4) Change dynamic priority boosts\n5) Create a new thread and start executing the long running loop\n6) Change process affinity mask\n7) Thinking about quitting...\n";
+			"4) Change dynamic priority boosts\n5) Create a new thread and start executing the long running loop\n6) Change process affinity mask\n7) Terminate spawned threads\n" <<
+			"8) Thinking about quitting...\n";
 		std::cin >> choice;
 		switch (choice)
 		{
@@ -86,15 +87,16 @@ int main()
 			break;
 		}
 		case 3:
-			LongRunningLoop();
+			// LongRunningLoop();
 			break;
 		case 4:
 			BoostPriorityChangerSelector();
 			break;
 		case 5:
 		{
-			HANDLE thread = CreateThread(nullptr, 0, LongRunningLoopCaller, nullptr, 0, nullptr);
-			hThreads.push_back(ThreadHolder(thread));
+			HANDLE hEvent = CreateEvent(nullptr, false, false, nullptr);
+			HANDLE thread = CreateThread(nullptr, 0, ThreadWork, (LPVOID)hEvent, 0, nullptr);
+			hThreads.push_back(ThreadHolder(thread, hEvent));
 			break;
 		}
 		case 6:
@@ -102,6 +104,21 @@ int main()
 			GetProcessAffinityMask(GetCurrentProcess(), &processAffinityMask, &systemAffinityMask);
 			break;
 		case 7:
+		{
+			if (hThreads.size() == 0)
+			{
+				std::cout << "There are no extra threads to terminate!\n";
+			}
+			else
+			{
+				std::cout << "Which thread do you wish to terminate? ";
+				int choice;
+				std::cin >> choice;
+				SetEvent(hThreads.at(choice - 1).GetEvent());
+			}
+			break;
+		}
+		case 8:
 			break;
 		default:
 			std::cout << "Did not understand that choice. Please try again...\n";
@@ -112,9 +129,14 @@ int main()
 	}
 }
 
-DWORD WINAPI LongRunningLoopCaller(PVOID pdata)
+DWORD WINAPI ThreadWork(PVOID pdata)
 {
-	LongRunningLoop();
+	HANDLE hEvent = (HANDLE)pdata;
+	int count = 0;
+	while (WaitForSingleObject(hEvent, 0) != WAIT_OBJECT_0)
+	{
+		count++;
+	}
 	return 0;
 }
 
