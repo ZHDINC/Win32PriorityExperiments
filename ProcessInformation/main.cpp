@@ -50,7 +50,7 @@ int main()
 			int i = 1;
 			for (const auto& hThread : hThreads)
 			{
-				std::cout << "Thread " << i << "  priority: " << ThPriority.at(GetThreadPriority(hThread.GetThread())) << "\n";
+				std::cout << "Thread " << i << " TID(" << GetThreadId(hThread.GetThread()) << ") " << "  priority: " << ThPriority.at(GetThreadPriority(hThread.GetThread())) << "\n";
 				i++;
 			}
 		}
@@ -118,7 +118,7 @@ int main()
 				{
 					SetEvent(hThreads.at(choice - 1).GetEvent());
 					hThreads.at(choice - 1).ThreadFinished();
-					std::erase_if(hThreads, [&](ThreadHolder& th) { return th.CanRemoveThread(); });
+					hThreads.erase(std::remove_if(hThreads.begin(), hThreads.end(), [](ThreadHolder& th) { return th.CanRemoveThread(); }));
 				}
 				catch (std::out_of_range e)
 				{

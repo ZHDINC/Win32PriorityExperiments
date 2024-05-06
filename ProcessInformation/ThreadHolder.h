@@ -10,7 +10,14 @@ public:
 	ThreadHolder(HANDLE hThread, HANDLE hEvent) : hThread{ hThread }, hEvent{ hEvent } { };
 	ThreadHolder(const ThreadHolder& other) = delete; // I would be fine with copying assuming there was a way to create a new handle from the existing one. Move constructor does what I need it to. 
 	ThreadHolder& operator=(ThreadHolder& other) = delete;
-	ThreadHolder& operator=(ThreadHolder&&) = default;
+	ThreadHolder& operator=(ThreadHolder&& other)
+	{
+		hThread = std::move(other.hThread);
+		hEvent = std::move(other.hEvent);
+		other.hThread = INVALID_HANDLE_VALUE;
+		other.hEvent = INVALID_HANDLE_VALUE;
+		return *this;
+	}
 	ThreadHolder(ThreadHolder&& other)
 	{
 		this->hThread = other.hThread;
