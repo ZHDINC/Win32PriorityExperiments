@@ -10,6 +10,7 @@ public:
 	ThreadHolder(HANDLE hThread, HANDLE hEvent) : hThread{ hThread }, hEvent{ hEvent } { };
 	ThreadHolder(const ThreadHolder& other) = delete; // I would be fine with copying assuming there was a way to create a new handle from the existing one. Move constructor does what I need it to. 
 	ThreadHolder& operator=(ThreadHolder& other) = delete;
+	ThreadHolder& operator=(ThreadHolder&&) = default;
 	ThreadHolder(ThreadHolder&& other)
 	{
 		this->hThread = other.hThread;
@@ -33,5 +34,9 @@ public:
 	void ThreadFinished()
 	{
 		threadIsTerminated = true;
+	}
+	bool CanRemoveThread()
+	{
+		return threadIsTerminated;
 	}
 };

@@ -114,7 +114,16 @@ int main()
 				std::cout << "Which thread do you wish to terminate? ";
 				int choice;
 				std::cin >> choice;
-				SetEvent(hThreads.at(choice - 1).GetEvent());
+				try
+				{
+					SetEvent(hThreads.at(choice - 1).GetEvent());
+					hThreads.at(choice - 1).ThreadFinished();
+					std::erase_if(hThreads, [&](ThreadHolder& th) { return th.CanRemoveThread(); });
+				}
+				catch (std::out_of_range e)
+				{
+					std::cout << "Invalid Index!\n";
+				}
 			}
 			break;
 		}
