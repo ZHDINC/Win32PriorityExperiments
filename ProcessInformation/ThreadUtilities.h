@@ -48,9 +48,8 @@ DWORD ThreadPrioritySwitch(const int& choice, bool& defaultchoice)
 	return priority;
 }
 
-void ChangeThreadBoost()
+void ChangeThreadBoost(HANDLE hThread)
 {
-	HANDLE hThread = GetCurrentThread();
 	BOOL priorityBoostOld = false;
 	GetThreadPriorityBoost(hThread, &priorityBoostOld);
 	std::string priorityBoostOldString = priorityBoostOld ? "Dynamic priority boost is disabled" : "Dynamic priority boost is enabled";

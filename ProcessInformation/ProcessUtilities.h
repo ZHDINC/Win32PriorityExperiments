@@ -44,9 +44,8 @@ DWORD ProcessPrioritySwitch(const int& choice, bool& defaultchoice)
 	return priority;
 }
 
-void ChangeProcessPriority()
+void ChangeProcessPriority(HANDLE hProcess)
 {
-	HANDLE hProcess = GetCurrentProcess();
 	std::cout << "Which priority do you wish to change to process to?\n1) Idle\n2) Below Normal\n3) Normal\n4) Above Normal\n5) Highest\n6) Real-time\n";
 	int choice;
 	std::cin >> choice;
@@ -71,12 +70,10 @@ void ChangeProcessPriority()
 		std::cout << "Failed to set priority class! Check last error!\n";
 		std::cout << GetLastError();
 	}
-	CloseHandle(hProcess);
 }
 
-void ChangeProcessBoost()
+void ChangeProcessBoost(HANDLE hProcess)
 {
-	HANDLE hProcess = GetCurrentProcess();
 	BOOL priorityBoostOld = false;
 	GetProcessPriorityBoost(hProcess, &priorityBoostOld);
 	std::string priorityBoostOldString = priorityBoostOld ? "Dynamic priority boost is disabled" : "Dynamic priority boost is enabled";
@@ -87,7 +84,7 @@ void ChangeProcessBoost()
 	SetProcessPriorityBoost(hProcess, priorityBoostChoice);
 }
 
-void ChangeProcessAffinityMask()
+void ChangeProcessAffinityMask(HANDLE hProcess)
 {
 	int sum = 0;
 	std::cout << "On this processor, here are the possible affinity masks for individual cpus:\n";
@@ -105,5 +102,5 @@ void ChangeProcessAffinityMask()
 	DWORD_PTR choice;
 	std::cout << "\nWhich affinity mask would you like to change to?\n";
 	std::cin >> choice;
-	SetProcessAffinityMask(GetCurrentProcess(), choice);
+	SetProcessAffinityMask(hProcess, choice);
 }

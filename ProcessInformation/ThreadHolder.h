@@ -14,6 +14,7 @@ public:
 	{
 		hThread = std::move(other.hThread);
 		hEvent = std::move(other.hEvent);
+		threadIsTerminated = std::move(other.threadIsTerminated);
 		other.hThread = INVALID_HANDLE_VALUE;
 		other.hEvent = INVALID_HANDLE_VALUE;
 		return *this;
@@ -22,6 +23,7 @@ public:
 	{
 		this->hThread = other.hThread;
 		this->hEvent = other.hEvent;
+		this->threadIsTerminated = other.threadIsTerminated;
 		other.hThread = INVALID_HANDLE_VALUE;
 		other.hEvent = INVALID_HANDLE_VALUE;
 	}

@@ -8,26 +8,12 @@
 #include"ThreadUtilities.h"
 #include"ThreadHolder.h"
 
-void BoostPriorityChangerSelector()
+void BoostPriorityChangerSelector(HANDLE hProcess, HANDLE hThread)
 {
 	std::cout << "Which boost do you want to change?\n1) Process\n2) Thread\n";
 	int choice;
 	std::cin >> choice;
-	choice == 1 ? ChangeProcessBoost() : ChangeThreadBoost();
-}
-
-void LongRunningLoop(bool* flag)
-{
-	//char beginLoop;
-	//std::cout << "Awaiting performance monitor ready...";
-	//std::cin >> beginLoop;
-	int count = 0;
-	while(*flag == false)
-	{
-		count++;
-		//std::cout << i << ' ';
-	}
-	//std::cout << '\n';
+	choice == 1 ? ChangeProcessBoost(hProcess) : ChangeThreadBoost(hThread);
 }
 
 DWORD WINAPI ThreadWork(PVOID pdata);
@@ -37,14 +23,16 @@ int main()
 	std::vector<ThreadHolder> hThreads;
 	char keepGoing = 'Y';
 	DWORD_PTR processAffinityMask, systemAffinityMask;
+	HANDLE currentProcess = GetCurrentProcess();
+	HANDLE currentThread = GetCurrentThread();
 	GetProcessAffinityMask(GetCurrentProcess(), &processAffinityMask, &systemAffinityMask); // initially tried to be smart about this by using DWORD variables and then casting the address of these to PDWORD_PTR, but this corrupted the stack
 	while (keepGoing == 'Y')
 	{
 		system("cls");
-		std::cout << "Current process priority is: " << PsPriority.at(GetPriorityClass(GetCurrentProcess())) << '\n';
+		std::cout << "Current process priority is: " << PsPriority.at(GetPriorityClass(currentProcess)) << '\n';
 		
 		std::cout << "Process Affinity Group: " << processAffinityMask << " System Affinity Mask: " << systemAffinityMask << '\n';
-		std::cout << "Current thread priority is: " << ThPriority.at(GetThreadPriority(GetCurrentThread())) <<  '\n';
+		std::cout << "Current thread priority is: " << ThPriority.at(GetThreadPriority(currentThread)) <<  '\n';
 		if (hThreads.size() != 0)
 		{
 			int i = 1;
@@ -55,14 +43,14 @@ int main()
 			}
 		}
 		int choice;
-		std::cout << "What do you want to do?\n1) Change Process Priority\n2) Change Thread Priority\n3) Initiate a long running loop to track thread state changes\n" << 
-			"4) Change dynamic priority boosts\n5) Create a new thread and start executing the long running loop\n6) Change process affinity mask\n7) Terminate spawned threads\n" <<
-			"8) Thinking about quitting...\n";
+		std::cout << "What do you want to do?\n1) Change Process Priority\n2) Change Thread Priority\n3) Change dynamic priority boosts\n" << 
+			"4) Create a new thread and start executing the long running loop\n5) Change process affinity mask\n6) Terminate spawned threads\n" <<
+			"7) Thinking about quitting...\n";
 		std::cin >> choice;
 		switch (choice)
 		{
 		case 1:
-			ChangeProcessPriority();
+			ChangeProcessPriority(currentProcess);
 			break;
 		case 2:
 		{
@@ -71,7 +59,7 @@ int main()
 			std::cin >> threadChoice;
 			if (threadChoice == 0)
 			{
-				ChangeThreadPriority(GetCurrentThread());
+				ChangeThreadPriority(currentThread);
 			}
 			else
 			{
@@ -87,23 +75,20 @@ int main()
 			break;
 		}
 		case 3:
-			// LongRunningLoop();
+			BoostPriorityChangerSelector(currentProcess, currentThread);
 			break;
 		case 4:
-			BoostPriorityChangerSelector();
-			break;
-		case 5:
 		{
 			HANDLE hEvent = CreateEvent(nullptr, false, false, nullptr);
 			HANDLE thread = CreateThread(nullptr, 0, ThreadWork, (LPVOID)hEvent, 0, nullptr);
 			hThreads.push_back(ThreadHolder(thread, hEvent));
 			break;
 		}
-		case 6:
-			ChangeProcessAffinityMask();
-			GetProcessAffinityMask(GetCurrentProcess(), &processAffinityMask, &systemAffinityMask);
+		case 5:
+			ChangeProcessAffinityMask(currentProcess);
+			GetProcessAffinityMask(currentProcess, &processAffinityMask, &systemAffinityMask);
 			break;
-		case 7:
+		case 6:
 		{
 			if (hThreads.size() == 0)
 			{
@@ -127,7 +112,7 @@ int main()
 			}
 			break;
 		}
-		case 8:
+		case 7:
 			break;
 		default:
 			std::cout << "Did not understand that choice. Please try again...\n";
@@ -136,6 +121,8 @@ int main()
 		std::cout << "Keep going? (Y/N)";
 		std::cin >> keepGoing;
 	}
+	CloseHandle(currentThread);
+	CloseHandle(currentProcess);
 }
 
 DWORD WINAPI ThreadWork(PVOID pdata)
