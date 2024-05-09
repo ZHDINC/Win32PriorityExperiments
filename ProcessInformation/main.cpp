@@ -38,14 +38,20 @@ int main()
 			int i = 1;
 			for (const auto& hThread : hThreads)
 			{
-				std::cout << "Thread " << i << " TID(" << GetThreadId(hThread.GetThread()) << ") " << "  priority: " << ThPriority.at(GetThreadPriority(hThread.GetThread())) << "\n";
+				PGROUP_AFFINITY groupAffinity = { };
+				//PPROCESSOR_NUMBER idealProcessor = { };
+				GetThreadGroupAffinity(hThread.GetThread(), groupAffinity);
+				//GetThreadIdealProcessorEx(hThread.GetThread(), idealProcessor);
+				std::cout << GetLastError() << '\n';
+				std::cout << "Thread " << i << " TID(" << GetThreadId(hThread.GetThread()) << ") " << "  priority: " << ThPriority.at(GetThreadPriority(hThread.GetThread())) << "\n" <<
+					"-------Group Affinity: " << groupAffinity << '\n'; // " Ideal Processor: " << idealProcessor->Number << '\n';
 				i++;
 			}
 		}
 		int choice;
 		std::cout << "What do you want to do?\n1) Change Process Priority\n2) Change Thread Priority\n3) Change dynamic priority boosts\n" << 
-			"4) Create a new thread and start executing the long running loop\n5) Change process affinity mask\n6) Terminate spawned threads\n" <<
-			"7) Thinking about quitting...\n";
+			"4) Create a new thread and start executing the long running loop\n5) Change process affinity mask\n6) Change thread ideal processor\n7) Terminate spawned threads\n" <<
+			"8) Thinking about quitting...\n";
 		std::cin >> choice;
 		switch (choice)
 		{
@@ -65,9 +71,9 @@ int main()
 			{
 				try
 				{
-					ChangeThreadPriority(hThreads.at(threadChoice-1).GetThread());
+					ChangeThreadPriority(hThreads.at(threadChoice - 1).GetThread());
 				}
-				catch(std::out_of_range e)
+				catch (std::out_of_range e)
 				{
 					std::cout << "Invalid Index!\n";
 				}
@@ -89,6 +95,28 @@ int main()
 			GetProcessAffinityMask(currentProcess, &processAffinityMask, &systemAffinityMask);
 			break;
 		case 6:
+		{
+			int threadChoice;
+			std::cout << "Which thread do you wish to change the affinity mask of? (thread 0 for current process)\n";
+			std::cin >> threadChoice;
+			if (threadChoice == 0)
+			{
+				ChangeThreadIdealProcessor(currentThread);
+			}
+			else
+			{
+				try
+				{
+					ChangeThreadIdealProcessor(hThreads.at(threadChoice - 1).GetThread());
+				}
+				catch (std::out_of_range e)
+				{
+					std::cout << "Invalid Index!\n";
+				}
+			}
+			break;
+		}
+		case 7:
 		{
 			if (hThreads.size() == 0)
 			{
@@ -112,7 +140,7 @@ int main()
 			}
 			break;
 		}
-		case 7:
+		case 8:
 			break;
 		default:
 			std::cout << "Did not understand that choice. Please try again...\n";

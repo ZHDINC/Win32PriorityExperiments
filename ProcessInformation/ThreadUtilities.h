@@ -84,3 +84,11 @@ void ChangeThreadPriority(HANDLE hThread)
 		std::cout << GetLastError();
 	}
 }
+
+void ChangeThreadIdealProcessor(HANDLE hThread)
+{
+	int choice; 
+	std::cout << "On this processor, there are " << GetMaximumProcessorCount(ALL_PROCESSOR_GROUPS) << " cores you could assign to. Which one do you want?\n";
+	std::cin >> choice;
+	SetThreadIdealProcessor(hThread, choice);
+}
